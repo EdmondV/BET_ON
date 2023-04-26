@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Betonchart</title>
+</head>
+<body>
+<noscript>If you're seeing this message, that means <strong>JavaScript has been disabled on your browser</strong>,
+    please <strong>enable JS</strong> to make this app work.
+</noscript>
+<div id="preloader">
+    <div class="prl-loader">
+        <div class="prl-progress-bar" style="visibility: hidden"></div>
+        <div class="prl-text">
+            <div class="prl-animated-text" style="">Initializing</div>
+        </div>
+    </div>
+</div>
+<div id="app"></div>
+<script id="load">
+  (function () {
+    /* replace */ var assets = [];
+
+    if (!assets.length) return;
+
+    var vendor = assets.find(i => i.name.indexOf('vendor') === 0);
+    var sizeSort = (a, b) => b.size - a.size;
+    var load = vendor ? [vendor].concat(assets.filter(i => i.name.indexOf('vendor') === -1).sort(sizeSort)) : assets.sort(sizeSort)
+    var preloader = document.getElementById('preloader');
+    var complete = 0;
+    var total = load.reduce((total, a) => total + a.size, 0);
+
+    function showText(percent, text) {
+      return `<div class="prl-loader">
+       <div class="prl-progress-bar">
+         <div class="prl-progress" style="width: ` + percent + `%;"></div>
+       </div>
+       <div class="prl-text">
+        ` + (text ? '<div class="prl-animated-text">' + text + '</div>' : percent.toFixed(2) + '%') + `
+       </div>
+    </div>`
+    }
+
+    function updateProgress(index, e) {
+      load[index].loaded = e.loaded;
+
+      const loaded = load.reduce((loaded, a) => loaded + (a.loaded || 0), 0);
+      preloader.innerHTML = showText((Math.min(100, loaded / total * 100)));
+    }
+
+    function transferComplete(index, e) {
+      complete += 1;
+      load[index].text = e.target.responseText;
+
+      if (complete === load.length) {
+        preloader.innerHTML = showText(100, 'Running up');
+        // This timeout fix when script is loaded from cache – it is to fast to render message above
+        setTimeout(() => {
+          load.map(s => {
+            const script = document.createElement('script');
+            if (script.textContent) {
+              script.textContent = s.text;
+            } else {
+              script.innerText = s.text;
+            }
+            document.body.appendChild(script)
+          })
+        }, 20)
+      }
+    }
+
+    function request(url, index) {
+      const r = new XMLHttpRequest();
+      r.addEventListener('progress', updateProgress.bind(this, index), false);
+      r.addEventListener('load', transferComplete.bind(this, index), false);
+      r.open('GET', '/' + url);
+      r.send();
+    }
+
+    for (let i = 0, l = load.length; i < l; i += 1) {
+      request(load[i].name, i);
+    }
+  }());
+</script>
+<style>
+    body {
+        background: #000c2a;
+    }
+
+    #preloader {
+        position: fixed;
+        line-height: 1;
+        font-size: 12px;
+        right: 0;
+        bottom: 0;
+        background: rgb(0, 12, 42);
+        top: 0;
+        left: 0;
+        z-index: 10000;
+        font-family: 'Lato', Helvetica Neue, Helvetica, sans-serif;
+        font-weight: 300;
+        /*display: flex;*/
+        align-items: center;
+        justify-content: space-around;
+        display: none;
+    }
+
+    .prl-loader {
+        width: 200px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .prl-animated-text {
+        position: relative;
+        display: inline-block;
+    }
+
+    .prl-animated-text:after {
+        position: absolute;
+        left: 100%;
+        bottom: 0;
+        animation: ellipsis steps(4, end) 1000ms infinite;
+        content: "\2026"; /* ascii code for the ellipsis character */
+        margin-left: 1px;
+    }
+
+    .prl-text {
+        color: #fff;
+        text-shadow: 0 1px 0px #000;
+        opacity: .7;
+        text-align: center;
+    }
+
+    .prl-progress-bar {
+        height: 5px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        overflow: hidden;
+        background-color: rgba(70, 123, 184, .2);
+    }
+
+    .prl-progress {
+        height: 100%;
+        background: #467bb8;
+        background: linear-gradient(45deg, rgba(34, 116, 170, 1) 0%, rgba(41, 137, 216, 1) 53%, rgba(125, 185, 232, 1) 100%);
+    }
+
+    @keyframes ellipsis {
+        from {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+</style>
+<link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&subset=cyrillic,latin-ext" rel="stylesheet">
+</body>
+</html>
+
