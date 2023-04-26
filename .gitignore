@@ -1,0 +1,12 @@
+node_modules
+/.idea
+.DS_Store
+/build/
+/build/*
+config.local.json
+/www
+package-lock.json
+
+/rev.json
+/app/containers/MainPage/FootballPage/mocks/video/
+/app/videos/
